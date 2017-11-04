@@ -24,12 +24,13 @@ namespace RISCVII {
 enum {
   InstFormatPseudo = 0,
   InstFormatR = 1,
-  InstFormatI = 2,
-  InstFormatS = 3,
-  InstFormatB = 4,
-  InstFormatU = 5,
-  InstFormatJ = 6,
-  InstFormatOther = 7,
+  InstFormatR4 = 2,
+  InstFormatI = 3,
+  InstFormatS = 4,
+  InstFormatB = 5,
+  InstFormatU = 6,
+  InstFormatJ = 7,
+  InstFormatOther = 8,
 
   InstFormatMask = 15
 };
@@ -49,6 +50,19 @@ enum FenceField {
   O = 4,
   R = 2,
   W = 1
+};
+}
+
+// Describes the supported floating point rounding mode encodings.
+namespace RISCVFPRndMode {
+enum RoundingMode {
+  RNE = 0,
+  RTZ = 1,
+  RDN = 2,
+  RUP = 3,
+  RMM = 4,
+  DYN = 7,
+  Invalid
 };
 }
 } // namespace llvm

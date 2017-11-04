@@ -185,6 +185,34 @@ public:
     return true;
   }
 
+  // If the given string is a valid floating point rounding mode, return the
+  // matching RISCVFPRndMode::RoundingMode value. Otherwise, return
+  // RISCVFPRndMode::Invalid.
+  RISCVFPRndMode::RoundingMode parseFRM(StringRef Str) const {
+    return StringSwitch<RISCVFPRndMode::RoundingMode>(Str)
+        .Case("rne", RISCVFPRndMode::RNE)
+        .Case("rtz", RISCVFPRndMode::RTZ)
+        .Case("rdn", RISCVFPRndMode::RDN)
+        .Case("rup", RISCVFPRndMode::RUP)
+        .Case("rmm", RISCVFPRndMode::RMM)
+        .Case("dyn", RISCVFPRndMode::DYN)
+        .Default(RISCVFPRndMode::Invalid);
+  }
+
+  /// Return true if the operand is a valid floating point rounding mode.
+  bool isFRMArg() const {
+    if (!isImm())
+      return false;
+    const MCExpr *Val = getImm();
+    auto *SVal = dyn_cast<MCSymbolRefExpr>(Val);
+    if (!SVal || SVal->getKind() != MCSymbolRefExpr::VK_None)
+      return false;
+
+    StringRef Str = SVal->getSymbol().getName();
+
+    return parseFRM(Str) != RISCVFPRndMode::Invalid;
+  }
+
   bool isUImm5() const {
     int64_t Imm;
     RISCVMCExpr::VariantKind VK;
@@ -344,6 +372,16 @@ public:
     }
     Inst.addOperand(MCOperand::createImm(Imm));
   }
+
+  void addFRMArgOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    // isFRMArg has validated the operand, meaning this cast is safe
+    auto SE = cast<MCSymbolRefExpr>(getImm());
+
+    RISCVFPRndMode::RoundingMode FRM = parseFRM(SE->getSymbol().getName());
+    assert(FRM != RISCVFPRndMode::Invalid && "Invalid rounding mode");
+    Inst.addOperand(MCOperand::createImm(FRM));
+  }
 };
 } // end anonymous namespace.
 
@@ -410,6 +448,12 @@ bool RISCVAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     return Error(
         ErrorLoc,
         "operand must be formed of letters selected in-order from 'iorw'");
+  }
+  case Match_InvalidFRMArg: {
+    SMLoc ErrorLoc = ((RISCVOperand &)*Operands[ErrorInfo]).getStartLoc();
+    return Error(
+        ErrorLoc,
+        "operand must be a valid floating point rounding mode mnemonic");
   }
   }
 

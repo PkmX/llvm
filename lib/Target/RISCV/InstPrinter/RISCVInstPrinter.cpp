@@ -16,6 +16,7 @@
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
@@ -24,11 +25,13 @@ using namespace llvm;
 #define DEBUG_TYPE "asm-printer"
 
 // Include the auto-generated portion of the assembly writer.
+#define PRINT_ALIAS_INSTR
 #include "RISCVGenAsmWriter.inc"
 
 void RISCVInstPrinter::printInst(const MCInst *MI, raw_ostream &O,
                                  StringRef Annot, const MCSubtargetInfo &STI) {
-  printInstruction(MI, O);
+  if (!printAliasInstr(MI, O))
+    printInstruction(MI, O);
   printAnnotation(O, Annot);
 }
 
@@ -66,4 +69,33 @@ void RISCVInstPrinter::printFenceArg(const MCInst *MI, unsigned OpNo,
     O << 'r';
   if ((FenceArg & RISCVFenceField::W) != 0)
     O << 'w';
+}
+
+void RISCVInstPrinter::printFRMArg(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  // TODO: What is the correct behaviour when encountering an unexpected
+  // rounding mode?
+  unsigned FRMArg = MI->getOperand(OpNo).getImm();
+  switch (FRMArg) {
+  default:
+    llvm_unreachable("Unknown floating point rounding mode");
+  case RISCVFPRndMode::RNE:
+    O << "rne";
+    break;
+  case RISCVFPRndMode::RTZ:
+    O << "rtz";
+    break;
+  case RISCVFPRndMode::RDN:
+    O << "rdn";
+    break;
+  case RISCVFPRndMode::RUP:
+    O << "rup";
+    break;
+  case RISCVFPRndMode::RMM:
+    O << "rmm";
+    break;
+  case RISCVFPRndMode::DYN:
+    O << "dyn";
+    break;
+  }
 }
