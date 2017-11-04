@@ -1,4 +1,4 @@
-# RUN: not llvm-mc -triple riscv32 < %s 2>&1 | FileCheck %s
+# RUN: not llvm-mc -triple riscv32 -mattr=+f < %s 2>&1 | FileCheck %s
 
 # Out of range immediates
 ## simm12
@@ -26,5 +26,7 @@ fmadd.s f10, f11, f12, ree # CHECK: :[[@LINE]]:24: error: invalid operand for in
 # Invalid rounding modes
 fmadd.s f10, f11, f12, f13, ree # CHECK: :[[@LINE]]:29: error: operand must be a valid floating point rounding mode mnemonic
 fmsub.s f14, f15, f16, f17, 0 # CHECK: :[[@LINE]]:29: error: operand must be a valid floating point rounding mode mnemonic
-
 fnmsub.s f18, f19, f20, f21, 0b111 # CHECK: :[[@LINE]]:30: error: operand must be a valid floating point rounding mode mnemonic
+
+# Using 'D' instructions for an 'F'-only target
+fadd.d ft0, ft1, ft2 # CHECK: :[[@LINE]]:1: error: instruction use requires an option to be enabled
