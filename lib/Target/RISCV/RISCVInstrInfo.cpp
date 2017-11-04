@@ -29,3 +29,16 @@
 using namespace llvm;
 
 RISCVInstrInfo::RISCVInstrInfo() : RISCVGenInstrInfo() {}
+
+void RISCVInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
+                                 MachineBasicBlock::iterator MBBI,
+                                 const DebugLoc &DL, unsigned DstReg,
+                                 unsigned SrcReg, bool KillSrc) const {
+  if (!RISCV::GPRRegClass.contains(DstReg, SrcReg)) {
+    llvm_unreachable("Impossible reg-to-reg copy");
+  }
+
+  BuildMI(MBB, MBBI, DL, get(RISCV::ADDI), DstReg)
+      .addReg(SrcReg, getKillRegState(KillSrc))
+      .addImm(0);
+}
