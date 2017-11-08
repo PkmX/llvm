@@ -86,6 +86,16 @@ private:
   SDValue lowerVASTART(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const;
+
+  virtual unsigned
+  getExceptionPointerRegister(const Constant *PersonalityFn) const override {
+    return RISCV::X10;
+  }
+
+  virtual unsigned
+  getExceptionSelectorRegister(const Constant *PersonalityFn) const override {
+    return RISCV::X11;
+  }
 };
 }
 
